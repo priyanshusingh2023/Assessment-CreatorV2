@@ -3,52 +3,57 @@ import json  # Used for JSON manipulation
 from config import API_URL, API_KEY, GENERATION_CONFIG, SAFETY_SETTINGS  # Imports configuration settings
 
 def generate_prompt_assessment(assessment_data):
+    print(assessment_data)
     """
     Generates a list of assessment prompts based on provided assessment data.
 
     Parameters:
-    assessment_data (dict): A dictionary containing the keys 'role', 'keywords', 'levels', and optionally 'toolsTechnologies'.
-        Each 'level' should have 'noOfQuestion' and 'level' keys to specify the number of questions
-        and the difficulty level respectively. 'toolsTechnologies' is a list of strings representing the tools and technologies used.
+    assessment_data (dict): A dictionary containing the keys 'role' and 'cards'.
+        Each 'card' should have 'keywords', 'tools', 'level', and 'noOfQuestions'.
 
     Returns:
     list: A list of strings, where each string is a formatted prompt for generating questions, optionally including tools and technologies.
 
     Raises:
-    ValueError: If the required keys are missing in `assessment_data` or any of its 'levels'.
+    ValueError: If the required keys are missing in `assessment_data` or any of its 'cards'.
     """
-      
-    # Check if the provided data has all required keys except toolsTechnologies which is optional
-    required_keys = ['role', 'keywords', 'levels']
+    # Check if the provided data has all required keys
+    required_keys = ['role', 'card']
     if not all(key in assessment_data for key in required_keys):
         raise ValueError("Missing required assessment data")
 
-    # Retrieve tools and technologies if provided
-    tools_technologies = assessment_data.get('toolsTechnologies', [])
-    tools_technologies_str = ", ".join(tools_technologies)  # Convert list to comma-separated string
+    role = assessment_data['role']
+    card = assessment_data['card']
+
+
+
 
     # Generate prompts based on the provided assessment data
     prompts = []
-    for level_data in assessment_data['levels']:
-        print(level_data)
-        # if not all(key in level_data for key in ['level','noOfQuestions']):
-            # raise ValueError("Missing level information in assessment data")
-    
-    # Check if the number of questions is greater than 1
-        if int(level_data['noOfQuestions']) < 1:
-            raise ValueError("Number of questions must be greater than 1")
-        
-     # Check if the level is valid (case insensitive)
-        if level_data['level'].lower() not in ['easy', 'medium', 'complex']:
-            raise ValueError("Level must be 'easy', 'medium', or 'complex'")
+    keywords = card.get('keywords')
+    tools = card.get('tools', [])
+    level = card.get('level')
+    no_of_questions = card.get('noOfQuestions')
 
-    # Append tools and technologies to the prompt if available
-        tools_str = f" using {tools_technologies_str}" if tools_technologies else ""
-        prompt = f"I want {level_data['noOfQuestions']} assessment questions of {level_data['level']} complexity for {assessment_data['role']} on {', '.join(assessment_data['keywords'])}{tools_str}."
-        prompts.append(prompt)
 
-    return prompts  # Return a list of formatted prompts
 
+        # Validate card fields
+    if not (keywords and tools is not None and level and no_of_questions):
+        raise ValueError("Missing required fields in one of the cards")
+
+    if int(no_of_questions) < 1:
+        raise ValueError("Number of questions must be greater than 1")
+
+    if level.lower() not in ['low', 'medium', 'high']:
+        raise ValueError("Level must be 'low', 'medium', or 'high'")
+
+        # Convert tools to comma-separated string
+    tools_str = f" using {', '.join(tools)}" if tools else ""
+        # Create the prompt
+    prompt = f"I want {no_of_questions} assessment questions of {level} complexity for {role} on {', '.join(keywords)}{tools_str}."
+
+    print(prompt)
+    return prompt  # Return a list of formatted prompts
 
 def get_result(prompt):
     """
@@ -64,29 +69,33 @@ def get_result(prompt):
     Exception: If there is any error in making the API request or processing the response.
     """
     # Predefined prompt for setting the context of generated content
-    final_prompt = "I am creating an assessment with the following specifications. Easy complexity should be blooms level 1 and 2 that test recall and comprehension. Medium complexity should be blooms level 3 of type application. Complex complexity should be blooms level 4 of type analytics, preferably scenario-based"
-    final_prompt += f"\n {prompt}"  # Append the specific prompt details to the final prompt
-    print(final_prompt)
+    final_prompt = ("I am creating an assessment with the following specifications. "
+                    "Low complexity should be Blooms level 1 and 2 that test recall and comprehension. "
+                    "Medium complexity should be Blooms level 3 of type application. "
+                    "Hight complexity should be Blooms level 4 of type analysis, preferably scenario-based. "
+                    f"\n{prompt}")
 
-    # Exception handling for HTTP requests
+    print(final_prompt)  # For debugging purposes
+
     try:
         # Set the API endpoint with authentication key
         apiUrl = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={API_KEY}"
-        
 
         # Example format for multiple-choice questions to guide content generation
-        exampleFormat = "MCQ strictly has to be in below format:" + \
-                        "Format: \n **Question 1 question" + \
-                        "\nA. Option 1" + \
-                        "\nB. Option 2" + \
-                        "\nC. Option 3" + \
-                        "\nD. Option 4" + \
-                        "\n**Answer: A. Option 1 "+\
-                        "\n no need to separate questions topic wise and mentioned the topic"
+        example_format = (
+            "MCQ strictly has to be in below format:\n"
+            "Format:\n **Question 1 question\n"
+            "A. Option 1\n"
+            "B. Option 2\n"
+            "C. Option 3\n"
+            "D. Option 4\n"
+            "**Answer: A. Option 1\n"
+            "No need to separate questions topic-wise and mention the topic."
+        )
 
         # Request body containing content parts, generation configuration, and safety settings
-        requestBody = {
-            "contents": [{"parts": [{"text": final_prompt + exampleFormat}]}],
+        request_body = {
+            "contents": [{"parts": [{"text": final_prompt + example_format}]}],
             "generationConfig": GENERATION_CONFIG,
             "safetySettings": SAFETY_SETTINGS
         }
@@ -94,12 +103,14 @@ def get_result(prompt):
         headers = {"Content-Type": "application/json"}  # HTTP headers for the request
 
         # Make a POST request to the API
-        response = requests.post(apiUrl, data=json.dumps(requestBody), headers=headers)
+        response = requests.post(apiUrl, data=json.dumps(request_body), headers=headers)
+        response.raise_for_status()  # Raise an HTTPError for bad responses
+
         # Extract the generated content from the response
         answer = response.json().get("candidates")[0].get("content").get("parts")[0].get("text")
-        print(answer)
+        print(answer)  # For debugging purposes
         return answer  # Return the generated content
 
-    except Exception as e:
-        print(" Service Exception:", e)
-        raise Exception("Error in getting response from Gemini api")
+    except requests.exceptions.RequestException as e:
+        print("Service Exception:", e)
+        raise Exception("Error in getting response from Gemini API")

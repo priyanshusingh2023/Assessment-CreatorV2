@@ -3,19 +3,18 @@ from services import generate_assessment  # Import the generate_assessment funct
 
 api = Namespace('Assessment_creator', description='Main operations for creating assessments')
 
-# Model for level structure in the request body
-level_model = api.model('levels', {
+# Model for card structure in the request body
+card_model = api.model('Card', {
+    'keywords': fields.List(fields.String, required=True, description='Keywords associated with the questions'),
+    'tools': fields.List(fields.String, required=True, description='Tools and technologies involved in the questions'),
     'level': fields.String(required=True, description='Difficulty level of the questions'),
     'noOfQuestions': fields.Integer(required=True, description='Number of questions for the level')
-
 })
 
 # Model for the entire assessment request body
 assessment_request_model = api.model('AssessmentRequest', {
     'role': fields.String(required=True, description='Role of the person for whom questions are created'),
-    'keywords': fields.List(fields.String, required=True, description='Keywords associated with the questions'),
-    'toolsTechnologies': fields.List(fields.String, required=True, description='Tools and technologies involved in the questions'),
-    'levels': fields.List(fields.Nested(level_model), required=True, description='List of levels with question count and difficulty')
+    'cards': fields.List(fields.Nested(card_model), required=True, description='List of cards with keywords, tools, level, and question count')
 })
 
 @api.route('/')
@@ -31,8 +30,10 @@ class Hello(Resource):
 
 @api.route('/generate_assessment')
 class GenerateAssessment(Resource):
+    
     @api.expect(assessment_request_model)
     def post(self):
+        print(assessment_request_model)
         """
         Receives assessment configuration data as JSON, validates it, and uses it to generate an assessment.
 
@@ -56,6 +57,7 @@ class GenerateAssessment(Resource):
             return {"error": f"Missing key in input data: {str(e)}"}, 400
 
         except Exception as e:
+            print(e)
             return {"error": f"An error occurred: {str(e)}"}, 500
 
 def configure_routes(api_instance):

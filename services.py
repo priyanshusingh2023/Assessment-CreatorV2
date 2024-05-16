@@ -21,11 +21,35 @@ def generate_assessment(assessment_data):
     if not isinstance(assessment_data, dict) or not assessment_data:
         raise ValueError("Invalid assessment data provided")
 
+    role = assessment_data.get('role')
+    cards = assessment_data.get('cards', [])
+    if not role or not cards:
+        raise ValueError("Missing role or cards in assessment data")
+    
+    print("Hii")
+
     result = ""  # Initialize a variable to store all generated content
-    # Generate prompts from the assessment data
-    prompts_entry = generate_prompt_assessment(assessment_data)
-    for prompt in prompts_entry:
-        # Generate assessment content for each prompt using an external API
+
+    for card in cards:
+        # Ensure each card has the necessary fields
+        keywords = card.get('keywords')
+        tools = card.get('tools')
+        level = card.get('level')
+        no_of_questions = card.get('noOfQuestions')
+
+        if not (keywords and tools is not None and level and no_of_questions):
+            raise ValueError("Missing required fields in one of the cards")
+
+        # Generate a prompt from the card data
+        prompt_data = {
+            'role': role,
+            'card':card
+        }
+
+        # Generate the prompt using the helper function
+        prompt = generate_prompt_assessment(prompt_data)
+        # Generate assessment content for the prompt using an external API
         res = get_result(prompt)
         result += res + "\n\n"  # Concatenate the results into a single string
+
     return result  # Return the final concatenated result
