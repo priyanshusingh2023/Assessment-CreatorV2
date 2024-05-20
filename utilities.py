@@ -84,12 +84,12 @@ def get_result(prompt):
         # Example format for multiple-choice questions to guide content generation
         example_format = (
             "MCQ strictly has to be in below format:\n"
-            "Format:\n **Question 1 question\n"
-            "A. Option 1\n"
-            "B. Option 2\n"
-            "C. Option 3\n"
-            "D. Option 4\n"
-            "**Answer: A. Option 1\n"
+            "Format:\n **Question 1 question"+"\n"
+            "A. Option 1"+"\n"
+            "B. Option 2"+"\n"
+            "C. Option 3"+"\n"
+            "D. Option 4"+"\n"
+            "**\nAnswer: A. Option 1\n"
             "No need to separate questions topic-wise and mention the topic."
         )
 
