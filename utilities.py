@@ -89,7 +89,7 @@ def get_result(prompt):
             "B. Option 2"+"\n"
             "C. Option 3"+"\n"
             "D. Option 4"+"\n"
-            "**\nAnswer: A. Option 1\n"
+            "\n**Answer: A. Option 1\n"
             "No need to separate questions topic-wise and mention the topic."
         )
 
