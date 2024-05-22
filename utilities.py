@@ -108,6 +108,26 @@ def get_result(prompt):
             "C. Option 3"+"\n"
             "D. Option 4"+"\n"
             "\n**Answer: Option no. Answer\n"
+            "MCQ Format Example:\n"
+            """
+        **Question 10** 
+        What is the purpose of the following code?
+    ```c
+        int arr[] = {1, 2, 3, 4, 5};
+        int sum, product;
+        sum = product = 1;
+        for (int i = 0; i < 5; i++) {
+          sum += arr[i];
+          product *= arr[i];
+                }
+    ```
+A. To calculate the sum and product of all elements in the array
+B. To calculate the average and standard deviation of all elements in the array
+C. To reverse the order of elements in the array
+D. To sort the elements in the array
+**Answer: A. To calculate the sum and product of all elements in the array**
+
+"""
             "No need to separate questions topic-wise and mention the topic and Write complete answer don't change the example formate,all MCQ questions should be in given format "
         )
 
