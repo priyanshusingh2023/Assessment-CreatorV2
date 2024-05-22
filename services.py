@@ -1,5 +1,5 @@
 from utilities import get_result, generate_prompt_assessment  # Imports necessary functions from utilities module
-
+import time
 def generate_assessment(assessment_data):
     """
     Generates an assessment based on provided data by creating specific prompts and using an API to generate content.
@@ -51,5 +51,7 @@ def generate_assessment(assessment_data):
         # Generate assessment content for the prompt using an external API
         res = get_result(prompt)
         result += res + "\n\n"  # Concatenate the results into a single string
+        if(len(cards)>1):
+            time.sleep(0.01)
 
     return result  # Return the final concatenated result

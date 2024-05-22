@@ -2,6 +2,20 @@ import requests  # Used for making HTTP requests
 import json  # Used for JSON manipulation
 from config import API_URL, API_KEY, GENERATION_CONFIG, SAFETY_SETTINGS  # Imports configuration settings
 
+keys =[API_KEY,"AIzaSyBakZOIP9c4AqSbeGNfMQkoO07rRE_1Fw4"]
+# keys=[API_KEY]
+index = 0
+
+def get_next_key():
+    global index
+    key = keys[index]
+    index = (index + 1) % len(keys)
+    return key
+
+# Example usage
+
+    print(f"Using key: {key}")
+
 def generate_prompt_assessment(assessment_data):
     print(assessment_data)
     """
@@ -77,9 +91,13 @@ def get_result(prompt):
 
     print(final_prompt)  # For debugging purposes
 
+    key = get_next_key()
+
+
+
     try:
         # Set the API endpoint with authentication key
-        apiUrl = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={API_KEY}"
+        apiUrl = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={key}"
 
         # Example format for multiple-choice questions to guide content generation
         example_format = (
@@ -89,8 +107,8 @@ def get_result(prompt):
             "B. Option 2"+"\n"
             "C. Option 3"+"\n"
             "D. Option 4"+"\n"
-            "\n**Answer: A. Option 1\n"
-            "No need to separate questions topic-wise and mention the topic."
+            "\n**Answer: A. ans\n"
+            "No need to separate questions topic-wise and mention the topic and Write complete answer don't change the example formate,all MCQ questions should be in given format "
         )
 
         # Request body containing content parts, generation configuration, and safety settings
