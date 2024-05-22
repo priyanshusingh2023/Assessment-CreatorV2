@@ -107,7 +107,7 @@ def get_result(prompt):
             "B. Option 2"+"\n"
             "C. Option 3"+"\n"
             "D. Option 4"+"\n"
-            "\n**Answer: A. ans\n"
+            "\n**Answer: Option no. Answer\n"
             "No need to separate questions topic-wise and mention the topic and Write complete answer don't change the example formate,all MCQ questions should be in given format "
         )
 
