@@ -1,5 +1,9 @@
 from flask_restx import Resource, Namespace, fields, reqparse
 from services import generate_assessment  # Import the generate_assessment function from services module
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 api = Namespace('Assessment_creator', description='Main operations for creating assessments')
 
@@ -26,6 +30,7 @@ class Hello(Resource):
         Returns:
         str: A greeting message indicating the API is up and running.
         """
+        logging.info("Hello endpoint called.")
         return "Hello From Assessment Creator Back-End"
 
 @api.route('/generate_assessment')
@@ -33,31 +38,25 @@ class GenerateAssessment(Resource):
     
     @api.expect(assessment_request_model)
     def post(self):
-        print(assessment_request_model)
-        """
-        Receives assessment configuration data as JSON, validates it, and uses it to generate an assessment.
-
-        Processes the incoming JSON data, validates presence of all required fields, and calls the assessment
-        generation service. Handles various errors and exceptions by returning appropriate HTTP status codes and
-        error messages.
-
-        Returns:
-        dict, int: A dictionary containing the generated assessment text on success or an error message on failure,
-                   accompanied by the appropriate HTTP status code.
-        """
+        logging.info("GenerateAssessment endpoint called.")
         try:
             assessment_data = api.payload  # Extract JSON data from the request payload
+            logging.debug(f"Received assessment data: {assessment_data}")
+
             if not assessment_data:
+                logging.warning("No data provided or invalid JSON format.")
                 return {"error": "No data provided or invalid JSON format"}, 400
 
             response = generate_assessment(assessment_data)
+            logging.info("Assessment generated successfully.")
             return {"assessment": response}, 200
 
         except KeyError as e:
+            logging.error(f"Missing key in input data: {str(e)}")
             return {"error": f"Missing key in input data: {str(e)}"}, 400
 
         except Exception as e:
-            print(e)
+            logging.error(f"An error occurred: {str(e)}", exc_info=True)
             return {"error": f"An error occurred: {str(e)}"}, 500
 
 def configure_routes(api_instance):
@@ -70,4 +69,5 @@ def configure_routes(api_instance):
     This function ensures that all defined routes and resources under the 'Assessment_creator' Namespace
     are registered with the Flask application, enabling their accessibility via HTTP requests.
     """
+    logging.info("Configuring routes for the API.")
     api_instance.add_namespace(api)

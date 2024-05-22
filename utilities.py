@@ -1,8 +1,12 @@
 import requests  # Used for making HTTP requests
 import json  # Used for JSON manipulation
+import logging  # Used for logging
 from config import API_URL, API_KEY, GENERATION_CONFIG, SAFETY_SETTINGS  # Imports configuration settings
 
-keys =[API_KEY,"AIzaSyBakZOIP9c4AqSbeGNfMQkoO07rRE_1Fw4"]
+# Set up logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+keys = [API_KEY, "AIzaSyBakZOIP9c4AqSbeGNfMQkoO07rRE_1Fw4"]
 # keys=[API_KEY]
 index = 0
 
@@ -12,12 +16,10 @@ def get_next_key():
     index = (index + 1) % len(keys)
     return key
 
-# Example usage
-
-    print(f"Using key: {key}")
-
 def generate_prompt_assessment(assessment_data):
-    print(assessment_data)
+    logging.info("Generating prompt for assessment.")
+    logging.debug(f"Assessment data received: {assessment_data}")
+    
     """
     Generates a list of assessment prompts based on provided assessment data.
 
@@ -34,13 +36,11 @@ def generate_prompt_assessment(assessment_data):
     # Check if the provided data has all required keys
     required_keys = ['role', 'card']
     if not all(key in assessment_data for key in required_keys):
+        logging.error("Missing required assessment data.")
         raise ValueError("Missing required assessment data")
 
     role = assessment_data['role']
     card = assessment_data['card']
-
-
-
 
     # Generate prompts based on the provided assessment data
     prompts = []
@@ -49,27 +49,31 @@ def generate_prompt_assessment(assessment_data):
     level = card.get('level')
     no_of_questions = card.get('noOfQuestions')
 
-
-
-        # Validate card fields
+    # Validate card fields
     if not (keywords and tools is not None and level and no_of_questions):
+        logging.error("Missing required fields in one of the cards.")
         raise ValueError("Missing required fields in one of the cards")
 
     if int(no_of_questions) < 1:
+        logging.error("Number of questions must be greater than 1.")
         raise ValueError("Number of questions must be greater than 1")
 
     if level.lower() not in ['low', 'medium', 'high']:
+        logging.error("Level must be 'low', 'medium', or 'high'.")
         raise ValueError("Level must be 'low', 'medium', or 'high'")
 
-        # Convert tools to comma-separated string
+    # Convert tools to comma-separated string
     tools_str = f" using {', '.join(tools)}" if tools else ""
-        # Create the prompt
+    # Create the prompt
     prompt = f"I want {no_of_questions} assessment questions of {level} complexity for {role} on {', '.join(keywords)}{tools_str}."
-
-    print(prompt)
+    
+    logging.info(f"Generated prompt: {prompt}")
     return prompt  # Return a list of formatted prompts
 
 def get_result(prompt):
+    logging.info("Generating result for prompt.")
+    logging.debug(f"Prompt: {prompt}")
+    
     """
     Generates assessment questions based on a given prompt using an external API.
 
@@ -86,14 +90,13 @@ def get_result(prompt):
     final_prompt = ("I am creating an assessment with the following specifications. "
                     "Low complexity should be Blooms level 1 and 2 that test recall and comprehension. "
                     "Medium complexity should be Blooms level 3 of type application. "
-                    "Hight complexity should be Blooms level 4 of type analysis, preferably scenario-based. "
+                    "High complexity should be Blooms level 4 of type analysis, preferably scenario-based. "
                     f"\n{prompt}")
 
-    print(final_prompt)  # For debugging purposes
-
+    logging.debug(f"Final prompt: {final_prompt}")
+    
     key = get_next_key()
-
-
+    logging.info(f"Using key: {key}")
 
     try:
         # Set the API endpoint with authentication key
@@ -102,33 +105,30 @@ def get_result(prompt):
         # Example format for multiple-choice questions to guide content generation
         example_format = (
             "MCQ strictly has to be in below format:\n"
-            "Format:\n **Question 1 question"+"\n"
-            "A. Option 1"+"\n"
-            "B. Option 2"+"\n"
-            "C. Option 3"+"\n"
-            "D. Option 4"+"\n"
-            "\n**Answer: Option no. Answer\n"
+            "Format:\n **Question 1 question**\n"
+            "A. Option 1\n"
+            "B. Option 2\n"
+            "C. Option 3\n"
+            "D. Option 4\n"
+            "\n**Answer: Option no. Answer**\n"
             "MCQ Format Example:\n"
-            """
-        **Question 10** 
-        What is the purpose of the following code?
-    ```c
-        int arr[] = {1, 2, 3, 4, 5};
-        int sum, product;
-        sum = product = 1;
-        for (int i = 0; i < 5; i++) {
-          sum += arr[i];
-          product *= arr[i];
-                }
-    ```
-A. To calculate the sum and product of all elements in the array
-B. To calculate the average and standard deviation of all elements in the array
-C. To reverse the order of elements in the array
-D. To sort the elements in the array
-**Answer: A. To calculate the sum and product of all elements in the array**
-
-"""
-            "No need to separate questions topic-wise and mention the topic and Write complete answer don't change the example formate,all MCQ questions should be in given format "
+            "**Question 10**\n"
+            "What is the purpose of the following code?\n"
+            "```c\n"
+            "int arr[] = {1, 2, 3, 4, 5};\n"
+            "int sum, product;\n"
+            "sum = product = 1;\n"
+            "for (int i = 0; i < 5; i++) {\n"
+            "  sum += arr[i];\n"
+            "  product *= arr[i];\n"
+            "}\n"
+            "```\n"
+            "A. To calculate the sum and product of all elements in the array\n"
+            "B. To calculate the average and standard deviation of all elements in the array\n"
+            "C. To reverse the order of elements in the array\n"
+            "D. To sort the elements in the array\n"
+            "**Answer: A. To calculate the sum and product of all elements in the array**\n"
+            "No need to separate questions topic-wise and mention the topic and Write complete answer don't change the example format, all MCQ questions should be in given format"
         )
 
         # Request body containing content parts, generation configuration, and safety settings
@@ -146,9 +146,10 @@ D. To sort the elements in the array
 
         # Extract the generated content from the response
         answer = response.json().get("candidates")[0].get("content").get("parts")[0].get("text")
-        print(answer)  # For debugging purposes
+        logging.info("Received response from API.")
+        logging.debug(f"Generated content: {answer}")
         return answer  # Return the generated content
 
     except requests.exceptions.RequestException as e:
-        print("Service Exception:", e)
+        logging.error("Service Exception:", exc_info=True)
         raise Exception("Error in getting response from Gemini API")
