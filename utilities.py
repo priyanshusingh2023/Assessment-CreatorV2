@@ -127,7 +127,7 @@ def get_result(prompt):
             "B. To calculate the average and standard deviation of all elements in the array\n"
             "C. To reverse the order of elements in the array\n"
             "D. To sort the elements in the array\n"
-            "**Answer: A. To calculate the sum and product of all elements in the array**\n"
+            "\n**Answer: A. To calculate the sum and product of all elements in the array**\n"
             "No need to separate questions topic-wise and mention the topic and Write complete answer don't change the example format, all MCQ questions should be in given format"
         )
 
